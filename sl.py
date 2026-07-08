@@ -116,884 +116,902 @@ if filtered.empty:
 # --------------------------------------------------
 # Dashboard tabs
 # --------------------------------------------------
-
 (
-    overview_tab,
-    relationship_tab,
-    segments_tab,
-    regression_tab,
-    distribution_tab,
-    data_tab,
+    Q1_tab,
+    Q2_tab
 ) = st.tabs(
     [
-        "Overview",
-        "Revenue vs TOP",
-        "Segments",
-        "Regression",
-        "Distribution",
-        "Data",
+        "Q1",
+        "Q2"
     ]
 )
 
-
-# --------------------------------------------------
-# Overview tab
-# --------------------------------------------------
-
-with overview_tab:
-    st.header("Dataset Overview")
-
-    c1, c2, c3, c4 = st.columns(4)
-
-    c1.metric(
-        "Rows",
-        f"{len(filtered):,}",
-    )
-
-    c2.metric(
-        "Total revenue",
-        f"{filtered['revenue'].sum():,.2f}",
-    )
-
-    c3.metric(
-        "Median revenue",
-        f"{filtered['revenue'].median():,.2f}",
-    )
-
-    c4.metric(
-        "Median TOP",
-        f"{filtered['top'].median():,.2f}",
-    )
-
-    left, right = st.columns(2)
-
-    with left:
-        fig, ax = plt.subplots()
-
-        sns.histplot(
-            filtered["revenue"],
-            bins=30,
-            kde=True,
-            ax=ax,
-        )
-
-        ax.set_title(
-            "Revenue Distribution"
-        )
-
-        ax.set_xlabel("Revenue")
-        ax.set_ylabel("Frequency")
-
-        st.pyplot(fig)
-        plt.close(fig)
-
-    with right:
-        fig, ax = plt.subplots()
-
-        sns.histplot(
-            filtered["top"],
-            bins=30,
-            kde=True,
-            ax=ax,
-        )
-
-        ax.set_title(
-            "TOP Distribution"
-        )
-
-        ax.set_xlabel("TOP")
-        ax.set_ylabel("Frequency")
-
-        st.pyplot(fig)
-        plt.close(fig)
-
-    st.subheader(
-        "Descriptive Statistics"
-    )
-
-    st.dataframe(
-        filtered[
-            ["revenue", "top"]
-        ].describe(),
-        use_container_width=True,
-    )
-
-
-# --------------------------------------------------
-# Revenue versus TOP tab
-# --------------------------------------------------
-
-with relationship_tab:
-    st.header("Revenue versus TOP")
-
-    hue = st.selectbox(
-        "Color points by",
+with Q1_tab:
+    (
+        overview_tab,
+        relationship_tab,
+        segments_tab,
+        regression_tab,
+        data_tab,
+    ) = st.tabs(
         [
-            "None",
-            "browser",
-            "platform",
-            "site",
-        ],
-        key="relationship_hue",
+            "Overview",
+            "Revenue vs TOP",
+            "Segments",
+            "Regression",
+            "Data",
+        ]
     )
 
-    fig, ax = plt.subplots(
-        figsize=(10, 5)
-    )
+    # --------------------------------------------------
+    # Overview tab
+    # --------------------------------------------------
 
-    sns.scatterplot(
-        data=filtered,
-        x="top",
-        y="revenue",
-        hue=None if hue == "None" else hue,
-        alpha=0.65,
-        ax=ax,
-    )
+    with overview_tab:
+        st.header("Dataset Overview")
 
-    ax.set_title("Revenue versus TOP")
-    ax.set_xlabel("TOP")
-    ax.set_ylabel("Revenue")
+        c1, c2, c3, c4 = st.columns(4)
 
-    st.pyplot(fig)
-    plt.close(fig)
-
-    try:
-        deciles = pd.qcut(
-            filtered["top"],
-            q=10,
-            duplicates="drop",
+        c1.metric(
+            "Rows",
+            f"{len(filtered):,}",
         )
 
-        summary = (
-            filtered.assign(
-                top_bin=deciles
-            )
-            .groupby(
-                "top_bin",
-                observed=True,
-            )
-            .agg(
-                median_top=(
-                    "top",
-                    "median",
-                ),
-                median_revenue=(
-                    "revenue",
-                    "median",
-                ),
-                count=(
-                    "revenue",
-                    "size",
-                ),
-            )
-            .reset_index(drop=True)
+        c2.metric(
+            "Total revenue",
+            f"{filtered['revenue'].sum():,.2f}",
         )
 
-        summary[
-            "revenue_change_pct"
-        ] = (
-            summary["median_revenue"]
-            .pct_change()
-            .mul(100)
+        c3.metric(
+            "Median revenue",
+            f"{filtered['revenue'].median():,.2f}",
         )
+
+        c4.metric(
+            "Median TOP",
+            f"{filtered['top'].median():,.2f}",
+        )
+
+        left, right = st.columns(2)
+
+        with left:
+            fig, ax = plt.subplots()
+
+            sns.histplot(
+                filtered["revenue"],
+                bins=30,
+                kde=True,
+                ax=ax,
+            )
+
+            ax.set_title(
+                "Revenue Distribution"
+            )
+
+            ax.set_xlabel("Revenue")
+            ax.set_ylabel("Frequency")
+
+            st.pyplot(fig)
+            plt.close(fig)
+
+        with right:
+            fig, ax = plt.subplots()
+
+            sns.histplot(
+                filtered["top"],
+                bins=30,
+                kde=True,
+                ax=ax,
+            )
+
+            ax.set_title(
+                "TOP Distribution"
+            )
+
+            ax.set_xlabel("TOP")
+            ax.set_ylabel("Frequency")
+
+            st.pyplot(fig)
+            plt.close(fig)
 
         st.subheader(
-            "Median Revenue by TOP Decile"
-        )
-
-        st.line_chart(
-            summary,
-            x="median_top",
-            y="median_revenue",
+            "Descriptive Statistics"
         )
 
         st.dataframe(
-            summary.round(2),
+            filtered[
+                ["revenue", "top"]
+            ].describe(),
             use_container_width=True,
         )
 
-    except ValueError:
-        st.info(
-            "There are not enough distinct "
-            "TOP values to create deciles."
+
+    # --------------------------------------------------
+    # Revenue versus TOP tab
+    # --------------------------------------------------
+
+    with relationship_tab:
+        st.header("Revenue versus TOP")
+
+        hue = st.selectbox(
+            "Color points by",
+            [
+                "None",
+                "browser",
+                "platform",
+                "site",
+            ],
+            key="relationship_hue",
         )
 
-
-# --------------------------------------------------
-# Segment analysis tab
-# --------------------------------------------------
-
-with segments_tab:
-    st.header("Segment Analysis")
-
-    group = st.selectbox(
-        "Compare by",
-        [
-            "browser",
-            "platform",
-            "site",
-        ],
-        key="segment_group",
-    )
-
-    metric = st.radio(
-        "Metric",
-        [
-            "revenue",
-            "top",
-        ],
-        horizontal=True,
-        key="segment_metric",
-    )
-
-    left, right = st.columns([2, 1])
-
-    with left:
         fig, ax = plt.subplots(
             figsize=(10, 5)
         )
 
-        sns.boxplot(
-            data=filtered,
-            x=group,
-            y=metric,
-            ax=ax,
-        )
-
-        ax.tick_params(
-            axis="x",
-            rotation=35,
-        )
-
-        ax.set_title(
-            f"{metric.title()} by "
-            f"{group.title()}"
-        )
-
-        st.pyplot(fig)
-        plt.close(fig)
-
-    with right:
-        distribution = (
-            filtered[group]
-            .value_counts(
-                normalize=True
-            )
-            .mul(100)
-            .rename("Percent")
-        )
-
-        st.bar_chart(distribution)
-
-    segment_summary = (
-        filtered.groupby(group)[
-            ["top", "revenue"]
-        ]
-        .agg(
-            [
-                "count",
-                "mean",
-                "median",
-                "std",
-            ]
-        )
-    )
-
-    st.subheader("Segment Summary")
-
-    st.dataframe(
-        segment_summary.round(2),
-        use_container_width=True,
-    )
-
-
-# --------------------------------------------------
-# Regression tab
-# --------------------------------------------------
-
-with regression_tab:
-    st.header("Regression Analysis")
-
-    model_name = st.selectbox(
-        "Select model",
-        [
-            "TOP only",
-            "TOP + segment effects",
-            "TOP interactions with each segment",
-            "TOP x browser x platform",
-            "TOP x browser x platform x site",
-        ],
-        key="regression_model",
-    )
-
-    formulas = {
-        "TOP only": (
-            "revenue ~ top"
-        ),
-
-        "TOP + segment effects": (
-            "revenue ~ top "
-            "+ C(browser) "
-            "+ C(platform) "
-            "+ C(site)"
-        ),
-
-        "TOP interactions with each segment": (
-            "revenue ~ "
-            "top*C(browser) "
-            "+ top*C(platform) "
-            "+ top*C(site)"
-        ),
-
-        "TOP x browser x platform": (
-            "revenue ~ "
-            "top*C(browser)*C(platform) "
-            "+ C(site)"
-        ),
-
-        "TOP x browser x platform x site": (
-            "revenue ~ "
-            "top*C(browser)*C(platform)*C(site)"
-        ),
-    }
-
-    selected_formula = formulas[
-        model_name
-    ]
-
-    st.write("Model formula:")
-    st.code(selected_formula)
-
-    try:
-        model = smf.ols(
-            selected_formula,
-            data=filtered,
-        ).fit(cov_type="HC3")
-
-        c1, c2, c3 = st.columns(3)
-
-        c1.metric(
-            "R-squared",
-            f"{model.rsquared:.3f}",
-        )
-
-        c2.metric(
-            "Adjusted R-squared",
-            f"{model.rsquared_adj:.3f}",
-        )
-
-        c3.metric(
-            "Observations",
-            f"{int(model.nobs):,}",
-        )
-
-        confidence_intervals = (
-            model.conf_int()
-        )
-
-        coefficient_table = pd.DataFrame(
-            {
-                "coefficient": model.params,
-                "std_error": model.bse,
-                "p_value": model.pvalues,
-                "ci_low": (
-                    confidence_intervals[0]
-                ),
-                "ci_high": (
-                    confidence_intervals[1]
-                ),
-            }
-        )
-
-        st.subheader("Coefficients")
-
-        st.dataframe(
-            coefficient_table.round(4),
-            use_container_width=True,
-        )
-
-        diagnostics = filtered.copy()
-
-        diagnostics["predicted"] = (
-            model.fittedvalues
-        )
-
-        diagnostics["residual"] = (
-            model.resid
-        )
-
-        fig, ax = plt.subplots(
-            figsize=(9, 4)
-        )
-
         sns.scatterplot(
-            data=diagnostics,
-            x="predicted",
-            y="residual",
+            data=filtered,
+            x="top",
+            y="revenue",
+            hue=None if hue == "None" else hue,
             alpha=0.65,
             ax=ax,
         )
 
-        ax.axhline(
-            0,
-            color="red",
-            linewidth=1,
-        )
-
-        ax.set_title(
-            "Residuals versus Fitted Values"
-        )
+        ax.set_title("Revenue versus TOP")
+        ax.set_xlabel("TOP")
+        ax.set_ylabel("Revenue")
 
         st.pyplot(fig)
         plt.close(fig)
 
-        with st.expander(
-            "Full Model Summary"
-        ):
-            st.text(
-                model.summary().as_text()
+        try:
+            deciles = pd.qcut(
+                filtered["top"],
+                q=10,
+                duplicates="drop",
             )
 
-    except Exception as exc:
-        st.error(
-            "The model could not be "
-            f"estimated: {exc}"
+            summary = (
+                filtered.assign(
+                    top_bin=deciles
+                )
+                .groupby(
+                    "top_bin",
+                    observed=True,
+                )
+                .agg(
+                    median_top=(
+                        "top",
+                        "median",
+                    ),
+                    median_revenue=(
+                        "revenue",
+                        "median",
+                    ),
+                    count=(
+                        "revenue",
+                        "size",
+                    ),
+                )
+                .reset_index(drop=True)
+            )
+
+            summary[
+                "revenue_change_pct"
+            ] = (
+                summary["median_revenue"]
+                .pct_change()
+                .mul(100)
+            )
+
+            st.subheader(
+                "Median Revenue by TOP Decile"
+            )
+
+            st.line_chart(
+                summary,
+                x="median_top",
+                y="median_revenue",
+            )
+
+            st.dataframe(
+                summary.round(2),
+                use_container_width=True,
+            )
+
+        except ValueError:
+            st.info(
+                "There are not enough distinct "
+                "TOP values to create deciles."
+            )
+
+
+    # --------------------------------------------------
+    # Segment analysis tab
+    # --------------------------------------------------
+
+    with segments_tab:
+        st.header("Segment Analysis")
+
+        group = st.selectbox(
+            "Compare by",
+            [
+                "browser",
+                "platform",
+                "site",
+            ],
+            key="segment_group",
+        )
+
+        metric = st.radio(
+            "Metric",
+            [
+                "revenue",
+                "top",
+            ],
+            horizontal=True,
+            key="segment_metric",
+        )
+
+        left, right = st.columns([2, 1])
+
+        with left:
+            fig, ax = plt.subplots(
+                figsize=(10, 5)
+            )
+
+            sns.boxplot(
+                data=filtered,
+                x=group,
+                y=metric,
+                ax=ax,
+            )
+
+            ax.tick_params(
+                axis="x",
+                rotation=35,
+            )
+
+            ax.set_title(
+                f"{metric.title()} by "
+                f"{group.title()}"
+            )
+
+            st.pyplot(fig)
+            plt.close(fig)
+
+        with right:
+            distribution = (
+                filtered[group]
+                .value_counts(
+                    normalize=True
+                )
+                .mul(100)
+                .rename("Percent")
+            )
+
+            st.bar_chart(distribution)
+
+        segment_summary = (
+            filtered.groupby(group)[
+                ["top", "revenue"]
+            ]
+            .agg(
+                [
+                    "count",
+                    "mean",
+                    "median",
+                    "std",
+                ]
+            )
+        )
+
+        st.subheader("Segment Summary")
+
+        st.dataframe(
+            segment_summary.round(2),
+            use_container_width=True,
         )
 
 
-# --------------------------------------------------
-# Normal distribution tab
-# --------------------------------------------------
+    # --------------------------------------------------
+    # Regression tab
+    # --------------------------------------------------
 
-with distribution_tab:
-    st.header(
-        "Normal Distribution Explorer"
+    with regression_tab:
+        st.header("Regression Analysis")
+
+        model_name = st.selectbox(
+            "Select model",
+            [
+                "TOP only",
+                "TOP + segment effects",
+                "TOP interactions with each segment",
+                "TOP x browser x platform",
+                "TOP x browser x platform x site",
+            ],
+            key="regression_model",
+        )
+
+        formulas = {
+            "TOP only": (
+                "revenue ~ top"
+            ),
+
+            "TOP + segment effects": (
+                "revenue ~ top "
+                "+ C(browser) "
+                "+ C(platform) "
+                "+ C(site)"
+            ),
+
+            "TOP interactions with each segment": (
+                "revenue ~ "
+                "top*C(browser) "
+                "+ top*C(platform) "
+                "+ top*C(site)"
+            ),
+
+            "TOP x browser x platform": (
+                "revenue ~ "
+                "top*C(browser)*C(platform) "
+                "+ C(site)"
+            ),
+
+            "TOP x browser x platform x site": (
+                "revenue ~ "
+                "top*C(browser)*C(platform)*C(site)"
+            ),
+        }
+
+        selected_formula = formulas[
+            model_name
+        ]
+
+        st.write("Model formula:")
+        st.code(selected_formula)
+
+        try:
+            model = smf.ols(
+                selected_formula,
+                data=filtered,
+            ).fit(cov_type="HC3")
+
+            c1, c2, c3 = st.columns(3)
+
+            c1.metric(
+                "R-squared",
+                f"{model.rsquared:.3f}",
+            )
+
+            c2.metric(
+                "Adjusted R-squared",
+                f"{model.rsquared_adj:.3f}",
+            )
+
+            c3.metric(
+                "Observations",
+                f"{int(model.nobs):,}",
+            )
+
+            confidence_intervals = (
+                model.conf_int()
+            )
+
+            coefficient_table = pd.DataFrame(
+                {
+                    "coefficient": model.params,
+                    "std_error": model.bse,
+                    "p_value": model.pvalues,
+                    "ci_low": (
+                        confidence_intervals[0]
+                    ),
+                    "ci_high": (
+                        confidence_intervals[1]
+                    ),
+                }
+            )
+
+            st.subheader("Coefficients")
+
+            st.dataframe(
+                coefficient_table.round(4),
+                use_container_width=True,
+            )
+
+            diagnostics = filtered.copy()
+
+            diagnostics["predicted"] = (
+                model.fittedvalues
+            )
+
+            diagnostics["residual"] = (
+                model.resid
+            )
+
+            fig, ax = plt.subplots(
+                figsize=(9, 4)
+            )
+
+            sns.scatterplot(
+                data=diagnostics,
+                x="predicted",
+                y="residual",
+                alpha=0.65,
+                ax=ax,
+            )
+
+            ax.axhline(
+                0,
+                color="red",
+                linewidth=1,
+            )
+
+            ax.set_title(
+                "Residuals versus Fitted Values"
+            )
+
+            st.pyplot(fig)
+            plt.close(fig)
+
+            with st.expander(
+                "Full Model Summary"
+            ):
+                st.text(
+                    model.summary().as_text()
+                )
+
+        except Exception as exc:
+            st.error(
+                "The model could not be "
+                f"estimated: {exc}"
+            )
+
+
+
+
+
+    # --------------------------------------------------
+    # Data tab
+    # --------------------------------------------------
+
+    with data_tab:
+        st.header("Filtered Dataset")
+
+        st.dataframe(
+            filtered,
+            use_container_width=True,
+        )
+
+        st.download_button(
+            "Download filtered data",
+            filtered.to_csv(
+                index=False
+            ).encode("utf-8"),
+            file_name="filtered_data.csv",
+            mime="text/csv",
+        )
+
+with Q2_tab:
+    (
+        distribution_tab,
+    ) = st.tabs(
+        [
+            "Distribution"
+        ]
     )
+    
+    # --------------------------------------------------
+    # Normal distribution tab
+    # --------------------------------------------------
 
-    st.write(
-        "Explore the normal curve, empirical "
-        "rule, Chebyshev's inequality, random "
-        "samples, and z-scores."
-    )
-
-    with st.expander(
-        "Distribution Parameters",
-        expanded=True,
-    ):
-        p1, p2 = st.columns(2)
-        p3, p4 = st.columns(2)
-
-        mu = p1.slider(
-            "Mean",
-            min_value=-50.0,
-            max_value=50.0,
-            value=0.0,
-            step=1.0,
-            key="distribution_mean",
+    with distribution_tab:
+        st.header(
+            "Normal Distribution Explorer"
         )
 
-        sigma = p2.slider(
-            "Standard deviation",
-            min_value=0.5,
-            max_value=20.0,
-            value=5.0,
-            step=0.5,
-            key="distribution_std",
+        st.write(
+            "Explore the normal curve, empirical "
+            "rule, Chebyshev's inequality, random "
+            "samples, and z-scores."
         )
 
-        sample_size = p3.slider(
-            "Sample size",
-            min_value=100,
-            max_value=10000,
-            value=1000,
-            step=100,
-            key="distribution_sample_size",
+        with st.expander(
+            "Distribution Parameters",
+            expanded=True,
+        ):
+            p1, p2 = st.columns(2)
+            p3, p4 = st.columns(2)
+
+            mu = p1.slider(
+                "Mean",
+                min_value=-50.0,
+                max_value=50.0,
+                value=0.0,
+                step=1.0,
+                key="distribution_mean",
+            )
+
+            sigma = p2.slider(
+                "Standard deviation",
+                min_value=0.5,
+                max_value=20.0,
+                value=5.0,
+                step=0.5,
+                key="distribution_std",
+            )
+
+            sample_size = p3.slider(
+                "Sample size",
+                min_value=100,
+                max_value=10000,
+                value=1000,
+                step=100,
+                key="distribution_sample_size",
+            )
+
+            k = p4.slider(
+                "k for Chebyshev",
+                min_value=1.1,
+                max_value=5.0,
+                value=2.0,
+                step=0.1,
+                key="distribution_k",
+            )
+
+            show_sample = st.checkbox(
+                "Show random sample histogram",
+                value=True,
+                key="distribution_show_sample",
+            )
+
+        x = np.linspace(
+            mu - 4 * sigma,
+            mu + 4 * sigma,
+            1000,
         )
 
-        k = p4.slider(
-            "k for Chebyshev",
-            min_value=1.1,
-            max_value=5.0,
-            value=2.0,
-            step=0.1,
-            key="distribution_k",
-        )
-
-        show_sample = st.checkbox(
-            "Show random sample histogram",
-            value=True,
-            key="distribution_show_sample",
-        )
-
-    x = np.linspace(
-        mu - 4 * sigma,
-        mu + 4 * sigma,
-        1000,
-    )
-
-    pdf = norm.pdf(
-        x,
-        mu,
-        sigma,
-    )
-
-    sample = (
-        np.random.default_rng(42)
-        .normal(
+        pdf = norm.pdf(
+            x,
             mu,
             sigma,
-            sample_size,
-        )
-    )
-
-    st.subheader(
-        "Normal Distribution Curve"
-    )
-
-    normal_fig = go.Figure()
-
-    normal_fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=pdf,
-            mode="lines",
-            name="Normal PDF",
-        )
-    )
-
-    normal_fig.add_vline(
-        x=mu,
-        line_dash="dash",
-        annotation_text="Mean",
-    )
-
-    normal_fig.add_vline(
-        x=mu - sigma,
-        line_dash="dot",
-        annotation_text="Mean - 1 SD",
-    )
-
-    normal_fig.add_vline(
-        x=mu + sigma,
-        line_dash="dot",
-        annotation_text="Mean + 1 SD",
-    )
-
-    normal_fig.add_vline(
-        x=mu - 2 * sigma,
-        line_dash="dot",
-        annotation_text="Mean - 2 SD",
-    )
-
-    normal_fig.add_vline(
-        x=mu + 2 * sigma,
-        line_dash="dot",
-        annotation_text="Mean + 2 SD",
-    )
-
-    normal_fig.update_layout(
-        title="Normal Distribution PDF",
-        xaxis_title="X value",
-        yaxis_title="Density",
-        height=500,
-    )
-
-    st.plotly_chart(
-        normal_fig,
-        use_container_width=True,
-    )
-
-    m1, m2, m3, m4 = st.columns(4)
-
-    m1.metric(
-        "Mean",
-        f"{mu:.2f}",
-    )
-
-    m2.metric(
-        "Standard deviation",
-        f"{sigma:.2f}",
-    )
-
-    m3.metric(
-        "Variance",
-        f"{sigma ** 2:.2f}",
-    )
-
-    m4.metric(
-        "Sample size",
-        f"{sample_size:,}",
-    )
-
-    st.subheader("Empirical Rule")
-
-    st.write(
-        """
-        For a normal distribution:
-
-        - Approximately **68%** of values fall within 1 standard deviation.
-        - Approximately **95%** fall within 2 standard deviations.
-        - Approximately **99.7%** fall within 3 standard deviations.
-        """
-    )
-
-    empirical_data = pd.DataFrame(
-        {
-            "Range": [
-                "Mean +/- 1 SD",
-                "Mean +/- 2 SD",
-                "Mean +/- 3 SD",
-            ],
-            "Lower bound": [
-                mu - sigma,
-                mu - 2 * sigma,
-                mu - 3 * sigma,
-            ],
-            "Upper bound": [
-                mu + sigma,
-                mu + 2 * sigma,
-                mu + 3 * sigma,
-            ],
-            "Approximate coverage": [
-                "68%",
-                "95%",
-                "99.7%",
-            ],
-        }
-    )
-
-    st.dataframe(
-        empirical_data,
-        use_container_width=True,
-    )
-
-    st.subheader(
-        "Chebyshev's Inequality"
-    )
-
-    chebyshev_min = (
-        1 - (1 / k**2)
-    )
-
-    normal_actual = (
-        norm.cdf(k)
-        - norm.cdf(-k)
-    )
-
-    st.write(
-        f"For any distribution, at least "
-        f"**{chebyshev_min * 100:.2f}%** "
-        f"of values lie within **{k:.1f} "
-        f"standard deviations** of the mean."
-    )
-
-    st.write(
-        f"For a normal distribution, the "
-        f"actual percentage is approximately "
-        f"**{normal_actual * 100:.2f}%**."
-    )
-
-    comparison = pd.DataFrame(
-        {
-            "Method": [
-                "Chebyshev minimum",
-                "Actual normal distribution",
-            ],
-            "Percentage": [
-                chebyshev_min * 100,
-                normal_actual * 100,
-            ],
-        }
-    )
-
-    st.dataframe(
-        comparison.round(2),
-        use_container_width=True,
-    )
-
-    lower_k = mu - k * sigma
-    upper_k = mu + k * sigma
-
-    x_fill = x[
-        (x >= lower_k)
-        & (x <= upper_k)
-    ]
-
-    y_fill = norm.pdf(
-        x_fill,
-        mu,
-        sigma,
-    )
-
-    chebyshev_fig = go.Figure()
-
-    chebyshev_fig.add_trace(
-        go.Scatter(
-            x=x,
-            y=pdf,
-            mode="lines",
-            name="Normal PDF",
-        )
-    )
-
-    chebyshev_fig.add_trace(
-        go.Scatter(
-            x=np.concatenate(
-                [
-                    x_fill,
-                    x_fill[::-1],
-                ]
-            ),
-            y=np.concatenate(
-                [
-                    y_fill,
-                    np.zeros_like(y_fill),
-                ]
-            ),
-            fill="toself",
-            name=f"Within {k:.1f} SD",
-        )
-    )
-
-    chebyshev_fig.add_vline(
-        x=lower_k,
-        line_dash="dash",
-    )
-
-    chebyshev_fig.add_vline(
-        x=upper_k,
-        line_dash="dash",
-    )
-
-    chebyshev_fig.update_layout(
-        title="Chebyshev Interval",
-        xaxis_title="X value",
-        yaxis_title="Density",
-        height=500,
-    )
-
-    st.plotly_chart(
-        chebyshev_fig,
-        use_container_width=True,
-    )
-
-    if show_sample:
-        st.subheader(
-            "Random Sample Histogram"
         )
 
-        histogram_fig = go.Figure()
-
-        histogram_fig.add_trace(
-            go.Histogram(
-                x=sample,
-                nbinsx=40,
-                histnorm="probability density",
-                name="Random sample",
+        sample = (
+            np.random.default_rng(42)
+            .normal(
+                mu,
+                sigma,
+                sample_size,
             )
         )
 
-        histogram_fig.add_trace(
+        st.subheader(
+            "Normal Distribution Curve"
+        )
+
+        normal_fig = go.Figure()
+
+        normal_fig.add_trace(
             go.Scatter(
                 x=x,
                 y=pdf,
                 mode="lines",
-                name=(
-                    "Theoretical normal curve"
-                ),
+                name="Normal PDF",
             )
         )
 
-        histogram_fig.update_layout(
-            title=(
-                "Random Sample versus "
-                "Theoretical Normal Curve"
-            ),
-            xaxis_title="Value",
+        normal_fig.add_vline(
+            x=mu,
+            line_dash="dash",
+            annotation_text="Mean",
+        )
+
+        normal_fig.add_vline(
+            x=mu - sigma,
+            line_dash="dot",
+            annotation_text="Mean - 1 SD",
+        )
+
+        normal_fig.add_vline(
+            x=mu + sigma,
+            line_dash="dot",
+            annotation_text="Mean + 1 SD",
+        )
+
+        normal_fig.add_vline(
+            x=mu - 2 * sigma,
+            line_dash="dot",
+            annotation_text="Mean - 2 SD",
+        )
+
+        normal_fig.add_vline(
+            x=mu + 2 * sigma,
+            line_dash="dot",
+            annotation_text="Mean + 2 SD",
+        )
+
+        normal_fig.update_layout(
+            title="Normal Distribution PDF",
+            xaxis_title="X value",
             yaxis_title="Density",
             height=500,
         )
 
         st.plotly_chart(
-            histogram_fig,
+            normal_fig,
             use_container_width=True,
         )
 
-    st.subheader(
-        "Z-Score Calculator"
-    )
+        m1, m2, m3, m4 = st.columns(4)
 
-    value = st.number_input(
-        "Enter a value X",
-        value=float(mu),
-        key="distribution_value",
-    )
+        m1.metric(
+            "Mean",
+            f"{mu:.2f}",
+        )
 
-    z_score = (
-        value - mu
-    ) / sigma
+        m2.metric(
+            "Standard deviation",
+            f"{sigma:.2f}",
+        )
 
-    percentile = (
-        norm.cdf(z_score)
-        * 100
-    )
+        m3.metric(
+            "Variance",
+            f"{sigma ** 2:.2f}",
+        )
 
-    z1, z2 = st.columns(2)
+        m4.metric(
+            "Sample size",
+            f"{sample_size:,}",
+        )
 
-    z1.metric(
-        "Z-score",
-        f"{z_score:.3f}",
-    )
+        st.subheader("Empirical Rule")
 
-    z2.metric(
-        "Percentile",
-        f"{percentile:.2f}%",
-    )
-
-    st.write(
-        f"A value of **{value}** is "
-        f"**{z_score:.3f} standard deviations** "
-        f"from the mean."
-    )
-
-    with st.expander(
-        "Assumptions and Interpretation"
-    ):
         st.write(
             """
-            The normal distribution is most appropriate when:
+            For a normal distribution:
 
-            - The data is approximately symmetric.
-            - Most values are close to the mean.
-            - Extreme values are uncommon.
-            - Mean, median, and mode are close.
-            - The variable is continuous.
-            - Many small independent effects contribute to the result.
-
-            Revenue, income, spending, clicks, and waiting times are often
-            skewed. Check histograms, boxplots, skewness, and outliers before
-            applying methods that assume normality.
+            - Approximately **68%** of values fall within 1 standard deviation.
+            - Approximately **95%** fall within 2 standard deviations.
+            - Approximately **99.7%** fall within 3 standard deviations.
             """
         )
 
+        empirical_data = pd.DataFrame(
+            {
+                "Range": [
+                    "Mean +/- 1 SD",
+                    "Mean +/- 2 SD",
+                    "Mean +/- 3 SD",
+                ],
+                "Lower bound": [
+                    mu - sigma,
+                    mu - 2 * sigma,
+                    mu - 3 * sigma,
+                ],
+                "Upper bound": [
+                    mu + sigma,
+                    mu + 2 * sigma,
+                    mu + 3 * sigma,
+                ],
+                "Approximate coverage": [
+                    "68%",
+                    "95%",
+                    "99.7%",
+                ],
+            }
+        )
 
-# --------------------------------------------------
-# Data tab
-# --------------------------------------------------
+        st.dataframe(
+            empirical_data,
+            use_container_width=True,
+        )
 
-with data_tab:
-    st.header("Filtered Dataset")
+        st.subheader(
+            "Chebyshev's Inequality"
+        )
 
-    st.dataframe(
-        filtered,
-        use_container_width=True,
-    )
+        chebyshev_min = (
+            1 - (1 / k**2)
+        )
 
-    st.download_button(
-        "Download filtered data",
-        filtered.to_csv(
-            index=False
-        ).encode("utf-8"),
-        file_name="filtered_data.csv",
-        mime="text/csv",
-    )
+        normal_actual = (
+            norm.cdf(k)
+            - norm.cdf(-k)
+        )
+
+        st.write(
+            f"For any distribution, at least "
+            f"**{chebyshev_min * 100:.2f}%** "
+            f"of values lie within **{k:.1f} "
+            f"standard deviations** of the mean."
+        )
+
+        st.write(
+            f"For a normal distribution, the "
+            f"actual percentage is approximately "
+            f"**{normal_actual * 100:.2f}%**."
+        )
+
+        comparison = pd.DataFrame(
+            {
+                "Method": [
+                    "Chebyshev minimum",
+                    "Actual normal distribution",
+                ],
+                "Percentage": [
+                    chebyshev_min * 100,
+                    normal_actual * 100,
+                ],
+            }
+        )
+
+        st.dataframe(
+            comparison.round(2),
+            use_container_width=True,
+        )
+
+        lower_k = mu - k * sigma
+        upper_k = mu + k * sigma
+
+        x_fill = x[
+            (x >= lower_k)
+            & (x <= upper_k)
+        ]
+
+        y_fill = norm.pdf(
+            x_fill,
+            mu,
+            sigma,
+        )
+
+        chebyshev_fig = go.Figure()
+
+        chebyshev_fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=pdf,
+                mode="lines",
+                name="Normal PDF",
+            )
+        )
+
+        chebyshev_fig.add_trace(
+            go.Scatter(
+                x=np.concatenate(
+                    [
+                        x_fill,
+                        x_fill[::-1],
+                    ]
+                ),
+                y=np.concatenate(
+                    [
+                        y_fill,
+                        np.zeros_like(y_fill),
+                    ]
+                ),
+                fill="toself",
+                name=f"Within {k:.1f} SD",
+            )
+        )
+
+        chebyshev_fig.add_vline(
+            x=lower_k,
+            line_dash="dash",
+        )
+
+        chebyshev_fig.add_vline(
+            x=upper_k,
+            line_dash="dash",
+        )
+
+        chebyshev_fig.update_layout(
+            title="Chebyshev Interval",
+            xaxis_title="X value",
+            yaxis_title="Density",
+            height=500,
+        )
+
+        st.plotly_chart(
+            chebyshev_fig,
+            use_container_width=True,
+        )
+
+        if show_sample:
+            st.subheader(
+                "Random Sample Histogram"
+            )
+
+            histogram_fig = go.Figure()
+
+            histogram_fig.add_trace(
+                go.Histogram(
+                    x=sample,
+                    nbinsx=40,
+                    histnorm="probability density",
+                    name="Random sample",
+                )
+            )
+
+            histogram_fig.add_trace(
+                go.Scatter(
+                    x=x,
+                    y=pdf,
+                    mode="lines",
+                    name=(
+                        "Theoretical normal curve"
+                    ),
+                )
+            )
+
+            histogram_fig.update_layout(
+                title=(
+                    "Random Sample versus "
+                    "Theoretical Normal Curve"
+                ),
+                xaxis_title="Value",
+                yaxis_title="Density",
+                height=500,
+            )
+
+            st.plotly_chart(
+                histogram_fig,
+                use_container_width=True,
+            )
+
+        st.subheader(
+            "Z-Score Calculator"
+        )
+
+        value = st.number_input(
+            "Enter a value X",
+            value=float(mu),
+            key="distribution_value",
+        )
+
+        z_score = (
+            value - mu
+        ) / sigma
+
+        percentile = (
+            norm.cdf(z_score)
+            * 100
+        )
+
+        z1, z2 = st.columns(2)
+
+        z1.metric(
+            "Z-score",
+            f"{z_score:.3f}",
+        )
+
+        z2.metric(
+            "Percentile",
+            f"{percentile:.2f}%",
+        )
+
+        st.write(
+            f"A value of **{value}** is "
+            f"**{z_score:.3f} standard deviations** "
+            f"from the mean."
+        )
+
+        with st.expander(
+            "Assumptions and Interpretation"
+        ):
+            st.write(
+                """
+                The normal distribution is most appropriate when:
+
+                - The data is approximately symmetric.
+                - Most values are close to the mean.
+                - Extreme values are uncommon.
+                - Mean, median, and mode are close.
+                - The variable is continuous.
+                - Many small independent effects contribute to the result.
+
+                Revenue, income, spending, clicks, and waiting times are often
+                skewed. Check histograms, boxplots, skewness, and outliers before
+                applying methods that assume normality.
+                """
+            )
